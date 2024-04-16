@@ -4,6 +4,7 @@ import os
 from detectron2.data import DatasetCatalog, MetadataCatalog
 from detectron2.data.datasets import load_sem_seg
 from detectron2.utils.colormap import colormap
+from ..prepare_datasets.prepare_isaid import H_SIZE, W_SIZE
 
 CLASSES = [
     'others',
@@ -49,6 +50,7 @@ def register_dataset(root):
     root = os.path.join(root, 'isaid')
     for split, image_dirname, sem_seg_dirname, class_names in [
         ('val', 'images_detectron2/val', 'annotations_detectron2/val', CLASSES),
+        (f'val_{H_SIZE}', f'images_detectron2/val_{H_SIZE}', f'annotations_detectron2/val_{H_SIZE}', CLASSES),
         ('val_official', 'images_detectron2/val', 'annotations_detectron2/val', CLASSES_OFFICIAL),
     ]:
         image_dir = os.path.join(root, image_dirname)

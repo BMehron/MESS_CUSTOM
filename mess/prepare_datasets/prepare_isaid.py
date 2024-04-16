@@ -1,13 +1,13 @@
 
 # run python mess/prepare_datasets/prepare_isaid.py
 
-import os
 import tqdm
-import gdown
-import numpy as np
+import os
 from pathlib import Path
-from PIL import Image
+import gdown
 
+import numpy as np
+from PIL import Image
 
 # iSAID dataset color to class mapping
 color_to_class = {0: [0, 0, 0],  # unlabeled
@@ -28,6 +28,8 @@ color_to_class = {0: [0, 0, 0],  # unlabeled
                   15: [0, 100, 155],  # Harbor
                   }
 
+H_SIZE = 640
+W_SIZE = 640
 
 def download_dataset(ds_path):
     """
@@ -46,7 +48,7 @@ def download_dataset(ds_path):
     os.system(f'rm {ds_path / "images.zip"}')
 
 
-def get_tiles(input, h_size=1024, w_size=1024, padding=0):
+def get_tiles(input, h_size=H_SIZE, w_size=W_SIZE, padding=0):
     input = np.array(input)
     h, w = input.shape[:2]
     tiles = []
@@ -73,14 +75,16 @@ def main():
     ds_path = dataset_dir / 'isaid'
     if not ds_path.exists():
         download_dataset(ds_path)
+    else:
+        print(f'Dataset was found. Tile size {H_SIZE} x {W_SIZE}')
 
     assert ds_path.exists(), f'Dataset not found in {ds_path}'
 
     for split in ['val']:
         assert (ds_path / f'raw_{split}').exists(), f'Raw {split} images not found in {ds_path / f"raw_{split}"}'
         # create directories
-        img_dir = ds_path / 'images_detectron2' / split
-        anno_dir = ds_path / 'annotations_detectron2' / split
+        img_dir = ds_path / 'images_detectron2' / f'{split}_{H_SIZE}'
+        anno_dir = ds_path / 'annotations_detectron2' / f'{split}_{W_SIZE}'
         os.makedirs(img_dir, exist_ok=True)
         os.makedirs(anno_dir, exist_ok=True)
 
@@ -106,7 +110,7 @@ def main():
                 Image.fromarray(mask_tile).save(anno_dir / f'{id}_{i}.png')
 
         print(f'Saved {split} images and masks of {ds_path.name} dataset')
-
+        
 
 if __name__ == '__main__':
     main()

@@ -8,11 +8,13 @@ import numpy as np
 import os
 from collections import OrderedDict
 import torch
+from datetime import datetime
 
 from detectron2.data import MetadataCatalog
 from detectron2.utils.comm import all_gather, is_main_process, synchronize
 from detectron2.utils.file_io import PathManager
 from detectron2.evaluation import SemSegEvaluator
+from .evaluation_post_processing import plot_metrics, plot_results
 
 
 class MESSSemSegEvaluator(SemSegEvaluator):
@@ -59,7 +61,7 @@ class MESSSemSegEvaluator(SemSegEvaluator):
             self._predictions = list(itertools.chain(*self._predictions))
             if not is_main_process():
                 return
-
+            # predictions are rows and gt's are columns
             self._conf_matrix = np.zeros_like(self._conf_matrix)
             for conf_matrix in conf_matrix_list:
                 self._conf_matrix += conf_matrix
@@ -77,6 +79,7 @@ class MESSSemSegEvaluator(SemSegEvaluator):
         tp = self._conf_matrix.diagonal()[:-1].astype(float)
         # Change: Consider potential no-object predictions for pos_gt
         # pos_gt = np.sum(self._conf_matrix[:-1, :-1], axis=0).astype(float)
+        # predictions are rows and gt's are columns
         pos_gt = np.sum(self._conf_matrix, axis=0).astype(float)[:-1]
         class_weights = pos_gt / np.sum(pos_gt)
         pos_pred = np.sum(self._conf_matrix[:-1, :-1], axis=1).astype(float)
@@ -112,6 +115,9 @@ class MESSSemSegEvaluator(SemSegEvaluator):
             file_path = os.path.join(self._output_dir, "sem_seg_evaluation.pth")
             with PathManager.open(file_path, "wb") as f:
                 torch.save(res, f)
+            plot_metrics(file_path, self._class_names, os.path.join(self._output_dir, "segmentation_metrics.png")) # ADDED BY MEKHRON
+            plot_results(self._dataset_name, self._predictions, os.path.join(self._output_dir, 'vis_predictions'), number_of_images=20) # ADDED BY MEKHRON
+                         
         results = OrderedDict({"sem_seg": res})
         self._logger.info(results)
         return results

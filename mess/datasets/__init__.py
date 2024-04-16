@@ -22,4 +22,6 @@ from . import (
     register_deepcrack,
     register_zerowaste,
     register_cwfid,
+    register_inria,
+    register_solar_gic_san_francisco_test_set
 )
